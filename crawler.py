@@ -79,6 +79,10 @@ try:
             dom_judgement_link = BeautifulSoup(request.post(URL_ROOT+entity['judgement_link'], data=DATA, headers=judgement_link_headers).content, 'html.parser')
             entity['judgement_content'] = dom_judgement_link.find('pre').text
 
+            ### view entity
+            for key, value in entity.iteritems():
+                print key, value
+
 except Exception, e:
     print '===============html content===============\n', content
     print '===============DOM===============\n', dom
