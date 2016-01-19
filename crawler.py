@@ -2,6 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 
+URL_ROOT = "http://jirs.judicial.gov.tw/FJUD/"
 URL_HOME = "http://jirs.judicial.gov.tw/FJUD/FJUDQRY01_1.aspx"
 URL_SEARCH = "http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx"
 DATA = {
@@ -59,11 +60,25 @@ try:
             entity = {
                 'SN': fields[0].text,
                 'judgment_number': fields[1].text,
-                'judgement_link': fields[1].find('a').href,
+                'judgement_link': fields[1].find('a')['href'],
                 'date': fields[2].text,
                 'summary': fields[3].text
             }
-            print entity
+
+            judgement_link_headers = {
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Encoding": "gzip, deflate, sdch",
+                "Accept-Language": "zh-TW,zh;q=0.8,ja;q=0.6,en;q=0.4",
+                "Connection": "keep-alive",
+                "DNT": "1",
+                "Host": "jirs.judicial.gov.tw",
+                "Referer": "http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx",
+                "Upgrade-Insecure-Requests": "1",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36",
+            }
+            dom_judgement_link = BeautifulSoup(request.post(URL_ROOT+entity['judgement_link'], data=DATA, headers=judgement_link_headers).content, 'html.parser')
+            entity['judgement_content'] = dom_judgement_link.find('pre').text
+
 except Exception, e:
     print '===============html content===============\n', content
     print '===============DOM===============\n', dom
