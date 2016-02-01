@@ -1,6 +1,7 @@
 # coding=UTF-8
 import requests
 from bs4 import BeautifulSoup
+import codecs
 
 URL_ROOT = "http://jirs.judicial.gov.tw/FJUD/"
 URL_HOME = "http://jirs.judicial.gov.tw/FJUD/FJUDQRY01_1.aspx"
@@ -54,34 +55,59 @@ content = request.post(URL_SEARCH, data=DATA, headers=headers).content
 dom = BeautifulSoup(content, "html.parser")
 
 try:
-    for row in dom.find('table', id='Table3').find_all('tr'):
-        fields = row.find_all('td')
-        if len(fields) > 0:
-            entity = {
-                'SN': fields[0].text,
-                'judgment_number': fields[1].text,
-                'judgement_link': fields[1].find('a')['href'],
-                'date': fields[2].text,
-                'summary': fields[3].text
-            }
+    while True:
 
-            judgement_link_headers = {
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Encoding": "gzip, deflate, sdch",
-                "Accept-Language": "zh-TW,zh;q=0.8,ja;q=0.6,en;q=0.4",
-                "Connection": "keep-alive",
-                "DNT": "1",
-                "Host": "jirs.judicial.gov.tw",
-                "Referer": "http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx",
-                "Upgrade-Insecure-Requests": "1",
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36",
-            }
-            dom_judgement_link = BeautifulSoup(request.post(URL_ROOT+entity['judgement_link'], data=DATA, headers=judgement_link_headers).content, 'html.parser')
-            entity['judgement_content'] = dom_judgement_link.find('pre').text
+        for row in dom.find('table', id='Table3').find_all('tr'):
+            fields = row.find_all('td')
+            if len(fields) > 0:
+                entity = {
+                    'SN': fields[0].text,
+                    'judgment_number': fields[1].text,
+                    'judgement_link': fields[1].find('a')['href'],
+                    'date': fields[2].text,
+                    'summary': fields[3].text
+                }
 
-            ### view entity
-            for key, value in entity.iteritems():
-                print key, value
+                judgement_link_headers = {
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Encoding": "gzip, deflate, sdch",
+                    "Accept-Language": "zh-TW,zh;q=0.8,ja;q=0.6,en;q=0.4",
+                    "Connection": "keep-alive",
+                    "DNT": "1",
+                    "Host": "jirs.judicial.gov.tw",
+                    "Referer": "http://jirs.judicial.gov.tw/FJUD/FJUDQRY02_1.aspx",
+                    "Upgrade-Insecure-Requests": "1",
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36",
+                }
+                dom_judgement_link = BeautifulSoup(request.post(URL_ROOT+entity['judgement_link'], data=DATA, headers=judgement_link_headers).content, 'html.parser')
+                entity['judgement_content'] = dom_judgement_link.find('pre').text
+
+
+                f = codecs.open(entity['SN']+'.txt', 'w', 'utf-8')
+                f.write(u'判決字號：')
+                f.write(entity['judgment_number'])
+                f.write('\r\n')
+                f.write(u'判決日期：')
+                f.write(entity['date'])
+                f.write('\r\n')
+                f.write(u'判決案由：')
+                f.write(entity['summary'])
+                f.write('\r\n')
+                f.write(u'判決全文：\r\n')
+                f.write(entity['judgement_content'])
+                f.write(u'原始連結：')
+                f.write(URL_ROOT + entity['judgement_link'])
+                f.close()
+                ### view entity
+                for key, value in entity.iteritems():
+                    ### print key, value
+                    pass
+
+        nextPage = dom.find('a', text=u'下一頁')
+        if nextPage is None:
+            break
+        content = request.post(URL_ROOT + nextPage['href'], data=DATA, headers=headers).content
+        dom = BeautifulSoup(content, "html.parser")
 
 except Exception, e:
     print '===============html content===============\n', content
