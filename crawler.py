@@ -2,6 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 import codecs
+import time
 
 URL_ROOT = "http://jirs.judicial.gov.tw/FJUD/"
 URL_HOME = "http://jirs.judicial.gov.tw/FJUD/FJUDQRY01_1.aspx"
@@ -83,7 +84,7 @@ try:
                 entity['judgement_content'] = dom_judgement_link.find('pre').text
 
 
-                f = codecs.open(entity['SN']+'.txt', 'w', 'utf-8')
+                f = codecs.open(str(int(entity['SN']))+'.txt', 'w', 'utf-8')
                 f.write(u'判決字號：')
                 f.write(entity['judgment_number'])
                 f.write('\r\n')
@@ -102,10 +103,12 @@ try:
                 for key, value in entity.iteritems():
                     ### print key, value
                     pass
+                print str(int(entity['SN'])) + " Downloaded"
 
         nextPage = dom.find('a', text=u'下一頁')
         if nextPage is None:
             break
+        time.sleep(1)
         content = request.post(URL_ROOT + nextPage['href'], data=DATA, headers=headers).content
         dom = BeautifulSoup(content, "html.parser")
 
